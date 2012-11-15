@@ -1,4 +1,4 @@
-.TH "MAKE.CONF" "5" "Sep 2012" "Portage VERSION" "Portage"
+.TH "MAKE.CONF" "5" "Oct 2012" "Portage VERSION" "Portage"
 .SH "NAME"
 make.conf \- custom settings for Portage
 .SH "SYNOPSIS"
@@ -361,6 +361,11 @@ Do \fBNOT\fR use \fIlmirror\fR for clients that need to override \fBRESTRICT\fR
 when fetching from a local mirror, but instead use a "local" mirror setting
 in \fI/etc/portage/mirrors\fR, as described in \fBportage\fR(5).
 .TP
+.B merge\-sync
+After a package is merged or unmerged, sync relevant files to
+disk in order to avoid data\-loss in the event of a power failure.
+This feature is enabled by default.
+.TP
 .B metadata\-transfer
 Automatically perform a metadata transfer when `emerge \-\-sync` is run.
 In versions of portage >=2.1.5, this feature is disabled by
@@ -555,6 +560,17 @@ portage:portage without a sandbox (unless \fIusersandbox\fR is also used).
 .TP
 .B usersandbox
 Enable the sandbox in the compile phase, when running without root privs (\fIuserpriv\fR).
+.TP
+.B usersync
+Drop privileges to the owner of \fBPORTDIR\fR for \fBemerge(1) --sync\fR
+operations.
+.TP
+.B webrsync-gpg
+Enable GPG verification when using \fIemerge\-webrsync\fR.
+.TP
+.B xattr
+Preserve extended attributes (filesystem-stored metadata) when installing
+files (see \fBattr\fR(1)).
 .RE
 .TP
 .B FETCHCOMMAND
@@ -652,14 +668,10 @@ unless \fBclean\-logs\fR is enabled in \fBFEATURES\fR.
 \fBPORTAGE_BINHOST\fR = \fI[space delimited URI list]\fR
 This is a list of hosts from which portage will grab prebuilt\-binary packages.
 Each entry in the list must specify the full address of a directory
-serving tbz2's for your system. This is only used when running with
+serving tbz2's for your system (this directory must contain a 'Packages' index
+file). This is only used when running with
 the get binary pkg options are given to \fBemerge\fR.  Review \fBemerge\fR(1) 
-for more information.  For versions of portage less that 2.1.6, this variable
-should point to the 'All' directory on the host that creates the binary
-packages and not to the root of the \fBPKGDIR\fR.  Starting with portage 2.1.6,
-it should point to a directory containing a 'Packages' index file.  If
-${PORTAGE_BINHOST}/Packages does not exist then portage will attempt to use
-the older protocol.
+for more information.
 .TP
 \fBPORTAGE_BINHOST_HEADER_URI\fR = \fI"ftp://login:pass@grp.mirror.site/pub/grp/i686/athlon\-xp/"\fR
 This variable only makes sense on a system that will serve as a binhost and
@@ -793,6 +805,34 @@ in this list of directories. Search order is from left to right. Note
 that the current implementation works by creating a symlink inside
 \fBDISTDIR\fR, but that may change in the future.
 .TP
+\fBPORTAGE_RSYNC_INITIAL_TIMEOUT\fR = \fIinteger\fR
+Used by \fBemerge \-\-sync\fR as a timeout for the initial connection to an
+rsync server.
+.br
+Defaults to 15 seconds.
+.TP
+\fBPORTAGE_RSYNC_EXTRA_OPTS\fR = \fI[rsync options string]\fR
+Additional rsync options to be used by \fBemerge \-\-sync\fR.
+.br
+Defaults to no value.
+.TP
+\fBPORTAGE_RSYNC_OPTS\fR = \fI[rsync options string]\fR
+Default rsync options to be used by \fBemerge \-\-sync\fR. 
+.br
+\fBDon't change this unless you know exactly what you're doing!\fR
+.br
+Defaults to "\-\-recursive \-\-links \-\-safe\-links \-\-perms \-\-times
+\-\-compress \-\-force \-\-whole\-file \-\-delete \-\-stats
+\-\-timeout=180 \-\-exclude='/distfiles' \-\-exclude='/local'
+\-\-exclude='/packages'"
+.TP
+\fBPORTAGE_RSYNC_RETRIES\fR = \fI[NUMBER]\fR
+The number of times rsync should retry on failed connections before
+giving up. If set to a negative number, then retry until all possible
+addresses are exhausted.
+.br
+Defaults to -1.
+.TP
 \fBPORTAGE_SYNC_STALE\fR = \fI[NUMBER]\fR
 Defines the number of days after the last `emerge \-\-sync` that a warning
 message should be produced. A value of 0 will disable warnings.
@@ -818,7 +858,8 @@ This variable controls permissions for \fIWORKDIR\fR (see \fBebuild\fR(5)).
 .TP
 \fBPORTDIR\fR = \fI[path]\fR
 Defines the location of the Portage tree. This is the repository for all
-profile information as well as all ebuilds.
+profile information as well as all ebuilds. If you change this, you must update
+your /etc/portage/make.profile symlink accordingly.
 .br
 Defaults to /usr/portage. 
 .br
@@ -855,10 +896,9 @@ settings from ebuilds.  See also \fBebuild\fR(5).
 Set this to cause portage to ignore any \fIQA_FLAGS_IGNORED\fR override
 settings from ebuilds.  See also \fBebuild\fR(5).
 .TP
-\fBQA_STRICT_DT_HASH = \fI"set"\fR
-Set this to cause portage to ignore any \fIQA_DT_HASH\fR override
-settings from ebuilds. This variable is deprecated. Use
-\fIQA_STRICT_FLAGS_IGNORED\fR instead.
+\fBQA_STRICT_MULTILIB_PATHS = \fI"set"\fR
+Set this to cause portage to ignore any \fIQA_MULTILIB_PATHS\fR override
+settings from ebuilds.  See also \fBebuild\fR(5).
 .TP
 \fBQA_STRICT_PRESTRIPPED = \fI"set"\fR
 Set this to cause portage to ignore any \fIQA_PRESTRIPPED\fR override
@@ -873,11 +913,12 @@ be necessary in order to continue a partially downloaded file located at
 .TP
 \fBROOT\fR = \fI[path]\fR
 Use \fBROOT\fR to specify the target root filesystem to be used for merging 
-packages or ebuilds.  All \fBRDEPEND\fR and \fBPDEPEND\fR will be installed 
-into \fBROOT\fR while all \fBDEPEND\fR will be still be installed into /.  
+packages or ebuilds.
 Typically, you should set this setting in the environment rather than in 
 \fI/etc/make.conf\fR itself.  It's commonly used for creating new build 
-images.  Make sure you use an absolute path.
+images. Make sure you use an absolute path. Refer to the
+\fBCross-compilation\fR section of \fBebuild\fR(5) for information about
+how dependencies are handled for \fBROOT\fR.
 .br
 Defaults to /.
 .TP
@@ -886,25 +927,11 @@ Defines the location where created RPM packages will be stored.
 .br
 Defaults to ${PORTDIR}/rpm.
 .TP
-\fBSYNC\fR = \fI[git-url]\fR
-SYNC is used to define the initial location from where to clone a Portage
-tree using git. For subsequent Portage tree update operations (git pulls using
-emerge --sync), this setting is ignored and the settings in the PORTDIR's .git 
-settings are used instead.
-.TP
-\fBSYNC_USER\fR = \fI[user]\fR
-Defaulting to root, SYNC_USER specifies the user account to use for performing
-git initial clone and pull (sync) operations. The user specified here will
-be the owner of all the files in the Portage tree. If using a non-root user,
-be sure that the user has permission to access (read) the parent location of
-PORTDIR. For example, if using the "portage" user with a PORTDIR of /usr/portage,
-ensure that the "portage" user can list the contents of /usr.
-.TP
-\fBSYNC_UMASK\fR = \f[umask]\fR
-Defaulting to 022, this specifies the umask to use when performing git clone or
-pull operations. The default values will allow all users to read the contents of
-the Portage tree, but only the SYNC_USER to modify these files. To prevent others
-from viewing the contents of the Portage tree, you can use a value of 077.
+\fBSYNC\fR = \fI[RSYNC]\fR
+Insert your preferred rsync mirror here.  This rsync server
+is used to sync the local portage tree when `emerge \-\-sync` is run.
+.br
+Defaults to rsync://rsync.gentoo.org/gentoo\-portage
 .TP
 \fBUNINSTALL_IGNORE\fR = \fI[space delimited list of fnmatch patterns]\fR
 This variable prevents uninstallation of files that match
