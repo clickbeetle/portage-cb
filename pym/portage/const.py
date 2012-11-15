@@ -96,7 +96,7 @@ SUPPORTED_FEATURES       = frozenset([
                            "downgrade-backup", "ebuild-locks", "fakeroot",
                            "fail-clean", "force-mirror", "force-prefix", "getbinpkg",
                            "installsources", "keeptemp", "keepwork", "fixlafiles", "lmirror",
-                           "merge-sync",
+                           "localpatch", "merge-sync",
                            "metadata-transfer", "mirror", "multilib-strict", "news",
                            "noauto", "noclean", "nodoc", "noinfo", "noman",
                            "nostrip", "notitles", "parallel-fetch", "parallel-install",
@@ -108,7 +108,7 @@ SUPPORTED_FEATURES       = frozenset([
                            "unknown-features-filter", "unknown-features-warn",
                            "unmerge-backup",
                            "unmerge-logs", "unmerge-orphans", "userfetch", "userpriv",
-                           "usersandbox", "usersync", "webrsync-gpg", "xattr"])
+                           "usersandbox", "xattr"])
 
 EAPI                     = 5
 
@@ -167,7 +167,7 @@ if "PORTAGE_OVERRIDE_EPREFIX" in os.environ:
 
 # Private constants for use in conditional code in order to minimize the diff
 # between branches.
-_DEPCLEAN_LIB_CHECK_DEFAULT = 'n'
-_ENABLE_REPO_NAME_WARN  = False
-_ENABLE_SET_CONFIG      = False
-_ENABLE_INHERIT_CHECK   = False
+_DEPCLEAN_LIB_CHECK_DEFAULT = True
+_ENABLE_REPO_NAME_WARN  = True
+_ENABLE_SET_CONFIG      = True
+_ENABLE_INHERIT_CHECK   = True

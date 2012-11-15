@@ -2,7 +2,7 @@
 # Copyright 1998-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-VERSION="2.1.11.31"
+VERSION="2.2.0_alpha142"
 
 # ===========================================================================
 # START OF IMPORTS -- START OF IMPORTS -- START OF IMPORTS -- START OF IMPORT

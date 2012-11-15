@@ -607,7 +607,7 @@ portdbapi.auxdbmodule = portage.cache.sqlite.database
 .fi
 
 After changing the portdbapi.auxdbmodule setting, it may be necessary to
-transfer or regenerate metadata cache. Users of the rsync tree need to
+transfer or regenerate metadata cache. Users of the Portage tree need to
 run `emerge \-\-metadata` if they have enabled FEATURES="metadata-transfer"
 in \fBmake.conf\fR(5). In order to regenerate metadata for repositories
 listed in \fBPORTDIR_OVERLAY\fR or a cvs tree, run `emerge \-\-regen`
@@ -756,11 +756,7 @@ are inherently \fBnot\fR \fIsite\-specific\fR. \fBWARNING:\fR Use of
 eclass inheritance (especially due to \fBeclass\-overrides\fR) may trigger
 performance issues under some circumstances (see \fBbug #124041\fR). When
 using \fBeclass\-overrides\fR, due to bug #276264, you must ensure that
-your portage tree does not contain a metadata/cache/ directory. If that
-directory exists then you should remove it entirely, and set
-PORTAGE_RSYNC_EXTRA_OPTS="\-\-exclude=/metadata/cache" in
-make.conf in order to exclude the metadata/cache/ directory during
-\fBemerge\fR(1) \-\-sync operations.
+your portage tree does not contain a metadata/cache/ directory.
 
 .I Example:
 .nf

@@ -68,7 +68,8 @@ in \fB/var/lib/portage/world_sets\fR. \fBsystem\fR refers to a set of
 packages deemed necessary for your system to run properly. \fBworld\fR
 encompasses both the \fBselected\fR and \fBsystem\fR sets. [See
 \fBFILES\fR below for more information.] Other sets can exist depending
-on the current configuration.
+on the current configuration. The default set configuration is located
+in the \fB/usr/share/portage/config/sets\fR directory.
 User sets may be created by placing files in the \fB/etc/portage/sets/\fR
 directory (see \fBportage\fR(5)). Note that a \fIset\fR
 is generally used in conjunction with \fB\-\-update\fR. When used as 
@@ -171,7 +172,7 @@ Displays a list of available package sets.
 .BR \-\-metadata
 Transfers metadata cache from ${PORTDIR}/metadata/cache/ to
 /var/cache/edb/dep/ as is normally done on the
-tail end of an rsync update using \fBemerge \-\-sync\fR.  This process
+tail end of an sync update using \fBemerge \-\-sync\fR.  This process
 populates the cache database that portage uses for pre-parsed lookups of
 package data.  It does not populate cache for the overlays listed in
 PORTDIR_OVERLAY.  In order to generate cache for overlays, use \fB\-\-regen\fR.
@@ -189,10 +190,10 @@ the emerge output of the next \-\-depclean run carefully! Use
 .BR \-\-regen
 Causes portage to check and update the dependency cache of all ebuilds in the 
 portage tree.  The cache is used to speed up searches and the building of 
-dependency trees.  This command is not recommended for rsync users as rsync 
+dependency trees.  This command is not recommended for Portage users as it 
 updates the cache using server\-side caches.  If you do not know the 
-differences between a 'rsync user' and some other user, then you are a 'rsync 
-user' :).  Rsync users should simply run \fBemerge \-\-sync\fR to regenerate 
+differences between a 'Portage user' and some other user, then you are a
+'Portage user' and you should simply run \fBemerge \-\-sync\fR to regenerate 
 the cache.  After a portage update, rsync users may find it convenient to run 
 \fBemerge \-\-metadata\fR to rebuild the cache as portage does at the end of 
 a sync operation. In order to specify parallel \fB\-\-regen\fR behavior, use
@@ -229,25 +230,14 @@ the package name.  \fBTake caution\fR as the descriptions are also
 matched as regular expressions.
 .TP
 .BR \-\-sync
-This updates the portage tree that is located in the
-directory that the PORTDIR variable refers to (default
-location is /usr/portage). The SYNC variable specifies
-the remote URI from which files will be synchronized.
-The \fBPORTAGE_SYNC_STALE\fR variable configures
-warnings that are shown when emerge \-\-sync has not
-been executed recently.
-
-\fBWARNING:\fR
-The emerge \-\-sync action will modify and/or delete
-files located inside the directory that the PORTDIR
-variable refers to (default location is /usr/portage).
-For more information, see the PORTDIR documentation in
-the make.conf(5) man page.
-
-\fBNOTE:\fR
-The \fBemerge\-webrsync\fR program will download the entire
-portage tree as a tarball, which is much faster than emerge
-\-\-sync for first time syncs.
+This updates the portage tree that is located in the directory that the PORTDIR
+variable refers to (default location is /usr/portage). If PORTDIR exists, the
+settings in the tree's .git directory define the location from where to pull
+updates.  If PORTDIR doesn't exist, then a new Portage tree will be cloned from
+the location specified in the SYNC variable.  SYNC_USER and SYNC_UMASK
+(defaulting to root and 022) define the user and umask that will be used during
+the sync operation -- for both initial Portage tree cloning and existing
+Portage tree updates.
 
 .TP
 .BR "\-\-unmerge " (\fB\-C\fR)
@@ -428,7 +418,7 @@ required.
 .BR "\-\-depclean\-lib\-check [ y | n ]"
 Account for library link-level dependencies during
 \fB\-\-depclean\fR and \fB\-\-prune\fR actions.
-This option is disabled by default. This option is ignored
+This option is enabled by default. This option is ignored
 when FEATURES="preserve\-libs" is enabled in
 \fBmake.conf\fR(5), since any libraries that have
 consumers will simply be preserved.
@@ -1068,6 +1058,9 @@ Zac Medico <zmedico@gentoo.org>
 .SH "FILES"
 Here is a common list of files you will probably be interested in.  For a 
 complete listing, please refer to the \fBportage\fR(5) man page.
+.TP
+.B /usr/share/portage/config/sets/
+Contains the default set configuration.
 .TP
 .B /var/lib/portage/world
 Contains a list of all user\-specified packages.  You can safely edit

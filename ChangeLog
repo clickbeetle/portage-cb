@@ -1,23 +1,3 @@
-commit c30450ec007912f905aa22e998e6b1d722e73dde
-Author: Zac Medico <zmedico@gentoo.org>
-Date:   Sun Sep 23 20:26:33 2012 -0700
-
-    emerge.1: --depclean-lib-check disabled default
-
-commit b6041cb2e7e7e6645f0b179b34f16e87ce3c28e9
-Author: Zac Medico <zmedico@gentoo.org>
-Date:   Fri Jun 3 05:28:16 2011 -0700
-
-    Remove extended package set configuration docs.
-
-    Extended package sets configuration is disabled in the stable branch.
-
-commit 0d1f194af3721a90b5890a7cba7e7ea712c191f3
-Author: Zac Medico <zmedico@gentoo.org>
-Date:   Fri Sep 21 15:03:12 2012 -0700
-
-    portage.const: toggle constants for stable branch
-
 commit 4126fcfb04efcedaf857b0f6977effb82c24e1cb
 Author: Zac Medico <zmedico@gentoo.org>
 Date:   Fri Oct 26 10:45:54 2012 -0700

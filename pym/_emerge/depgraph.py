@@ -6309,7 +6309,7 @@ class depgraph(object):
 		# redundantly displaying this exact same merge list
 		# again via _show_merge_list().
 		self._dynamic_config._displayed_list = mylist
-		display = Display()
+		display = Display(self._frozen_config.settings)
 
 		return display(self, mylist, favorites, verbosity)
 

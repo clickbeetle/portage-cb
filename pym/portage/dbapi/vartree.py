@@ -2118,7 +2118,8 @@ class dblink(object):
 
 			#process symlinks second-to-last, directories last.
 			mydirs = set()
-
+			fwprotect = os.path.join(self._eroot, "/lib/firmware/")
+			
 			uninstall_ignore = portage.util.shlex_split(
 				self.settings.get("UNINSTALL_IGNORE", ""))
 
@@ -2248,6 +2249,9 @@ class dblink(object):
 						("/lib", "/usr/lib", "/usr/local/lib"):
 						# Ignore libdir symlinks for bug #423127.
 						ignore = True
+				
+				if obj.startswith(fwprotect):
+					ignore = True
 
 				if ignore:
 					show_unmerge("---", unmerge_desc["cfgpro"], file_type, obj)

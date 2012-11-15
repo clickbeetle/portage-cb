@@ -523,7 +523,7 @@ class RepoConfigLoader(object):
 			else:
 				prepos['DEFAULT'].main_repo = None
 				if not portage._sync_disabled_warnings:
-					writemsg(_("!!! main-repo not set in DEFAULT and PORTDIR is empty.\n"), noiselevel=-1)
+					writemsg(_("Portage repository is currently empty.\n"), noiselevel=-1)
 
 		self.prepos = prepos
 		self.prepos_order = prepos_order
@@ -555,7 +555,7 @@ class RepoConfigLoader(object):
 						writemsg_level(_("Unavailable repository '%s' " \
 							"referenced by masters entry in '%s'\n") % \
 							(master_name, layout_filename),
-							level=logging.ERROR, noiselevel=-1)
+							level=logging.ERROR, noiselevel=0)
 					else:
 						master_repos.append(prepos[master_name])
 				repo.masters = tuple(master_repos)
@@ -582,7 +582,7 @@ class RepoConfigLoader(object):
 						writemsg_level(_("Unavailable repository '%s' " \
 							"referenced by eclass-overrides entry for " \
 							"'%s'\n") % (other_repo_name, repo_name), \
-							level=logging.ERROR, noiselevel=-1)
+							level=logging.ERROR, noiselevel=0)
 			repo.eclass_locations = tuple(eclass_locations)
 
 		eclass_dbs = {}

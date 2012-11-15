@@ -7,7 +7,7 @@
 # of ebuild.sh will work for pkg_postinst, pkg_prerm, and pkg_postrm
 # when portage is upgrading itself.
 
-PORTAGE_READONLY_METADATA="DEFINED_PHASES DEPEND DESCRIPTION
+PORTAGE_READONLY_METADATA="DEFINED_PHASES DESCRIPTION
 	EAPI HDEPEND HOMEPAGE INHERITED IUSE REQUIRED_USE KEYWORDS LICENSE
 	PDEPEND PROVIDE RDEPEND REPOSITORY RESTRICT SLOT SRC_URI"
 
@@ -243,6 +243,11 @@ __dyn_unpack() {
 	>> "$PORTAGE_BUILDDIR/.unpacked" || \
 		die "Failed to create $PORTAGE_BUILDDIR/.unpacked"
 	__vecho ">>> Source unpacked in ${WORKDIR}"
+
+	if has localpatch ${FEATURES}; then
+		localpatch
+	fi
+
 	__ebuild_phase post_src_unpack
 }
 
@@ -815,6 +820,15 @@ __ebuild_main() {
 	# nested subshells call die.
 	export EBUILD_MASTER_PID=$BASHPID
 	trap 'exit 1' SIGTERM
+
+	# auto-add xz-utils to DEPEND if we have file that requires it
+	if [ "${SRC_URI/\.xz/}" != "${SRC_URI}" ]
+	then
+		if [ "${DEPEND/app-arch\/xz-utils/}" = "${DEPEND}" ]
+		then
+			DEPEND="$DEPEND app-arch/xz-utils"
+		fi
+	fi
 
 	#a reasonable default for $S
 	[[ -z ${S} ]] && export S=${WORKDIR}/${P}

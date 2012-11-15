@@ -18,7 +18,7 @@ from portage.eapi import _get_eapi_attrs
 from portage.exception import InvalidDependString, SignatureException
 from portage.package.ebuild.config import _get_feature_flags
 from portage.package.ebuild._spawn_nofetch import spawn_nofetch
-from portage.output import ( blue, colorize, create_color_func,
+from portage.output import ( blue, colorize, create_color_func, bold,
 	darkblue, darkgreen, green, nc_len, teal)
 bad = create_color_func("BAD")
 from portage.util import writemsg_stdout
@@ -29,6 +29,8 @@ from _emerge.create_world_atom import create_world_atom
 from _emerge.resolver.output_helpers import ( _DisplayConfig, _tree_display,
 	_PackageCounters, _create_use_string, _format_size, _calc_changelog, PkgInfo)
 from _emerge.show_invalid_depstring_notice import show_invalid_depstring_notice
+
+from os import listdir
 
 if sys.hexversion >= 0x3000000:
 	basestring = str
@@ -43,7 +45,7 @@ class Display(object):
 	@param verbosity: integer, defaults to None
 	"""
 
-	def __init__(self):
+	def __init__(self, settings):
 		self.changelogs = []
 		self.print_msg = []
 		self.blockers = []
@@ -69,6 +71,35 @@ class Display(object):
 		self.conf = None
 		self.blocker_style = None
 
+		""" localpatch feature """
+		self.localpatch_enabled = "localpatch" in settings.features
+		self.localpatches = []
+		self.localpatch_overlay = settings["LOCALPATCH_OVERLAY"]
+		if self.localpatch_enabled:
+			try:
+				for f in listdir(self.localpatch_overlay):
+					temppath = self.localpatch_overlay + "/" + f
+					if temppath[:1] == ".":
+						continue
+					try:
+						for g in listdir(temppath):
+							temppath2 = str(temppath + "/" + g)
+							if temppath2[:1] == ".":
+								continue
+							try:
+								for h in listdir(temppath2):
+									if h[-6:] == ".patch" or h[-5:] == ".diff":
+										self.localpatches.append(f + "/" + g)
+										break
+							except OSError:
+								pass
+					except OSError:
+						pass
+			except OSError:
+				pass
+			
+
+
 
 	def _blockers(self, pkg):
 		"""Processes pkg for blockers and adds colorized strings to
@@ -90,6 +121,8 @@ class Display(object):
 			str(pkg.atom).lstrip("!"), mydb=self.vardb,
 			settings=self.pkgsettings
 			)
+		if self.localpatch_enabled:
+			addl += " "
 		if self.conf.columns and self.conf.quiet:
 			addl += " " + colorize(self.blocker_style, str(self.resolved))
 		else:
@@ -506,7 +539,20 @@ class Display(object):
 				myprint = myprint+(" "*(self.oldlp-nc_len(myprint)))
 			myprint += pkg_info.oldbest
 		return myprint
-
+	
+	def _has_local_patch(self, pkg):
+		""" Checks if the particular package has its own patch.
+		
+		@param pkg: _emerge.Package instance
+		"""
+		if pkg.cpv in self.localpatches:
+			return True
+		elif str(pkg.cp + "-" + pkg.cpv_split[2]) in self.localpatches:
+			return True
+		elif pkg.cp in self.localpatches:
+			return True
+		else:
+			return False
 
 	def _set_no_columns(self, pkg, pkg_info):
 		"""prints pkg info without column indentation.
@@ -527,10 +573,14 @@ class Display(object):
 				self.indent, self.pkgprint(pkg_str, pkg_info),
 				pkg_info.oldbest)
 		else:
-			myprint = "[%s %s] %s%s %s" % \
+			myprint = "[%s %s%s] %s%s %s" % \
 				(self.pkgprint(pkg.type_name, pkg_info),
-				pkg_info.attr_display, self.indent,
+				pkg_info.attr_display, \
+				bold(blue("L")) if self._has_local_patch(pkg) else " ", \
+				self.indent, \
 				self.pkgprint(pkg_str, pkg_info), pkg_info.oldbest)
+				#if self.localpatch_enabled:
+				#self. += bold(blue("L")) if self._has_local_patch(pkg) else " "
 		return myprint
 
 	def print_messages(self, show_repos):
@@ -789,7 +839,6 @@ class Display(object):
 			if pkg_info.ordered:
 				self.counters.new += 1
 		return myoldbest, myinslotlist
-
 
 	def __call__(self, depgraph, mylist, favorites=None, verbosity=None):
 		"""The main operation to format and display the resolver output.

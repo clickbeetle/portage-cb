@@ -141,6 +141,55 @@ docompress() {
 	fi
 }
 
+# applies 3rd party patches to packages
+localpatch() {
+	local patches_overlay_dir patches patch locksufix
+
+	locksufix="${RANDOM}"
+
+	if [ -d "${LOCALPATCH_OVERLAY}" ]; then
+		if [ -d "${LOCALPATCH_OVERLAY}/${CATEGORY}/${PN}-${PV}-${PR}" ]; then
+			patches_overlay_dir="${LOCALPATCH_OVERLAY}/${CATEGORY}/${PN}-${PV}-${PR}"
+		elif [ -d "${LOCALPATCH_OVERLAY}/${CATEGORY}/${PN}-${PV}" ]; then
+			patches_overlay_dir="${LOCALPATCH_OVERLAY}/${CATEGORY}/${PN}-${PV}"
+		elif [ -d "${LOCALPATCH_OVERLAY}/${CATEGORY}/${PN}" ]; then
+			patches_overlay_dir="${LOCALPATCH_OVERLAY}/${CATEGORY}/${PN}"
+		fi
+
+		if [ -n "${patches_overlay_dir}" ]; then
+			patches="$(find "${patches_overlay_dir}"/ -type f -regex '.*\.\(diff\|\patch\)$' | sort -n)";
+		fi
+	else
+		ewarn "LOCALPATCH_OVERLAY is set to '${LOCALPATCH_OVERLAY}' but there is no such directory."
+	fi
+
+	if [ -n "${patches}" ]; then
+		vecho ">>> Applying local patches..."
+		if [ ! -d "${S}" ]; then
+			eerror "The \$S variable pointing to non existing dir. Propably ebuild is messing with it."
+			eerror "Localpatch cannot work in such case."
+			die "localpatch failed."
+		fi
+		for patch in ${patches}; do
+			if [ -r "${patch}" ] && [ ! -f "${S}/.patch-${patch##*/}.${locksufix}" ]; then
+				for patchprefix in {0..4}; do
+					if patch -d "${S}" --dry-run -p${patchprefix} -i "${patch}" --silent > /dev/null; then
+						einfo "Applying ${patch##*/} ..."
+						patch -d "${S}" -p${patchprefix} -i "${patch}" --silent; eend $?
+						touch "${S}/.patch-${patch##*/}.${locksufix}"
+						EPATCH_EXCLUDE+=" ${patch##*/} "
+						break
+					elif [ "${patchprefix}" -ge 4 ]; then
+						eerror "\e[1;31mLocal patch ${patch##*/} does not fit.\e[0m"; eend 1; die "localpatch failed."
+					fi
+				done
+			fi
+		done
+
+		rm "${S}"/.patch-*."${locksufix}" -f
+	fi
+}
+
 # adds ".keep" files so that dirs aren't auto-cleaned
 keepdir() {
 	dodir "$@"
